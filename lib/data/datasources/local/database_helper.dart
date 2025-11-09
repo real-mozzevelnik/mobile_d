@@ -72,9 +72,9 @@ class DatabaseHelper {
   // Transaction methods
   Future<int> insertTransaction(TransactionModel transaction) async {
     final db = await database;
-    Map tm = transaction.toMap();
+    Map<String, dynamic> tm = transaction.toMap();
     tm['date'] = tm['date'].replaceAll('Z', '');
-    return await db.insert('transactions', transaction.toMap());
+    return await db.insert('transactions', tm);
   }
 
   Future<List<TransactionModel>> getTransactions(int userId) async {
@@ -94,13 +94,17 @@ class DatabaseHelper {
 
   Future<List<TransactionModel>> getTransactionsByDateRange(DateTime start, DateTime end, int userId) async {
     final db = await database;
+    print(start.toIso8601String());
+    print(end.toIso8601String());
+    final res = await db.query('transactions');
+    print(res);
     final List<Map<String, dynamic>> maps = await db.rawQuery('''
       SELECT t.*, c.name as categoryName 
       FROM transactions t
       LEFT JOIN categories c ON t.categoryId = c.id
       WHERE userId = ? AND t.date >= ? AND t.date <= ?
       ORDER BY t.date DESC, t.id DESC
-    ''', [userId, start.toIso8601String(), end.toIso8601String()]);
+    ''', [userId, start.toIso8601String() + '9', end.toIso8601String() + '9']);
 
     return List.generate(maps.length, (i) {
       return TransactionModel.fromMap(maps[i]);
